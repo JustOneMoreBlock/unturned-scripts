@@ -1,2 +1,2 @@
-# unturned-scripts
-Unturned Scripts
+# Unturned Scripts
+Figured out how to install Unturned on CentOS 7.
