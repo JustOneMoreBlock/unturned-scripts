@@ -4,6 +4,9 @@ echo "nameserver 8.8.4.4" >> /etc/resolv.conf
 
 # Add EPEL Repository
 yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+yum -y install yum-utils
+rpm --import "http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
+yum-config-manager --add-repo http://download.mono-project.com/repo/centos7/
 yum -y update
 
 # Basic Tools
