@@ -1,46 +1,55 @@
-#/bin/bash
+#!/bin/bash
 
-# File Check
-CURRENT="/home/Games/unturned/Modules/Unturned/Unturned.dll"
-UPDATED="/home/testing/unturned/Modules/Unturned/Unturned.dll"
+# yum -y install mono unzip wget screen
+# apt-get -y install mono unzip wget screen
 
-# SteamCMD Login
-user=""
-pass=""
+# Paths
+gamepath="/home/Games"
+game="$gamepath/unturned"
+app_id="1110390"
+steamcmd="$gamepath/steamcmd"
 
-# Download Unturned
-./steamcmd.sh @sSteamCmdForcePlatformBitness 32 +login ${user} ${pass} +force_install_dir unturned +app_update 304930 validate +exit
+# Countdown Timer
+# Loops every 6 hours
+countdown_timer="6"
 
-# Check if the current file matches the updated file.
-if diff ${CURRENT} ${UPDATED} > /dev/null
-then
-    echo "Updated"
-else
-command() {
+update_unturned() {
+sh ${steamcmd}/steamcmd.sh +login anonymous +force_install_dir ${game} +app_update ${app_id} validate +exit
+}
 
-path="/home/Games/unturned/Servers"
+update_rocket() {
+mkdir -p /home/Temp/
+cd /home/Temp
+wget https://ci.rocketmod.net/job/Rocket.Unturned/lastSuccessfulBuild/artifact/Rocket.Unturned/bin/Release/Rocket.zip -O Rocket.zip
+unzip -qqo Rocket.zip
+yes | cp -rf Modules ${game}/
+yes | cp -rf Scripts/Linux/RocketLauncher.exe ${game}/
+}
 
-cd ${path}
-
+start_servers() {
+game_servers="${game}/Servers"
+cd ${game_servers}
 for server in *
         do
-                screen -S ${server} -p 0 -X stuff "$1^M"  
+                cd ${game}
+                ulimit -n 65536
+                screen -dmS ${server} mono RocketLauncher.exe ${server}
+                echo "Starting ${server}"
+                sleep 15  
         done
 }
 
-command "broadcast Restarting in 2 Minutes for Unturned update. Please get to a safe place."
-sleep 60
-command "save"
-command "broadcast Restarting in 1 Minute for Unturned update. Please get to a safe place."
-sleep 60
-command "save"
-command "broadcast Update your Unturned and Re-join."
-sleep 5
-command "shutdown"
+function countdown(){
+   date1=$((`date +%s` + $1)); 
+   while [ "$date1" -ge `date +%s` ]; do 
+     echo -ne "$(date -u --date @$(($date1 - `date +%s`)) +%H:%M:%S)\r";
+     sleep 0.1
+   done
+}
 
-sleep 15
-killall -9 screen
-screen -wipe
-/sbin/start
-
-fi
+while true; do
+update_unturned
+update_rocket
+start_servers
+countdown $((${countdown_timer}*60*60))
+done
